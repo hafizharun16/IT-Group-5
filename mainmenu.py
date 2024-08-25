@@ -133,7 +133,30 @@ def open_control():
         clock.tick(60)
 
 def open_shop():
-    print("shop")
+    screen.fill(BLACK)
+    shop_font = pygame.font.Font(None, 45)
+    shop_text = shop_font.render("Under Maintenece!", True, WHITE)
+    shop_rect = shop_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+    screen.blit(shop_text, shop_rect)
+
+    back_button = pygame.Rect(WIDTH // 2 - 75, HEIGHT // 2 + 200, 150, 50)
+    pygame.draw.rect(screen, AQUA, back_button)
+    
+    back_text = title_font.render("BACK", True, BLACK)
+    back_text_rect = back_text.get_rect(center=back_button.center)
+    screen.blit(back_text, back_text_rect)
+
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.collidepoint(pygame.mouse.get_pos()):
+                    return
+        clock.tick(60)
 
 def open_credit():
     screen.fill(BLACK)

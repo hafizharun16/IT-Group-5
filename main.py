@@ -9,33 +9,36 @@ pygame.display.set_caption("Main Menu")
 clock = pygame.time.Clock()
 running = True
 
-#images
+#variable
+screen_black = False
+
+# images
 background_img = pygame.image.load("background0.jpg")
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
-#Colors
+# Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-AQUA=(51,255,255)
+AQUA = (51, 255, 255)
 
-#font
+# font
 title_font = pygame.font.Font('tittle.ttf', 30)
 title_font2 = pygame.font.Font('tittle.ttf', 50)
 title_text = title_font2.render('CAPTAIN INVADER', True, WHITE)
 text_rect = title_text.get_rect(center=(WIDTH // 2, 120))
 
-#button
+# buttons
 button_width = 150
 button_height = 40
 buttons = {
     'START': pygame.Rect(((button_width) //2) + 10 , (HEIGHT - button_height + 50) // 2 - 65, button_width, button_height),
     'CONTROL': pygame.Rect(((button_width) //2) + 10 , (HEIGHT - button_height + 50) // 2 + 10, button_width, button_height),
-    'OPTION': pygame.Rect(((button_width) //2) + 10 , (HEIGHT - button_height + 50) // 2 + 85, button_width, button_height),
-    'SHOP': pygame.Rect((WIDTH-button_width*2), (HEIGHT - button_height + 50) // 2 -65, button_width, button_height),
+    'SHOP': pygame.Rect(((button_width) //2) + 10 , (HEIGHT - button_height + 50) // 2 + 85, button_width, button_height),
+    'CREDIT': pygame.Rect((WIDTH-button_width*2), (HEIGHT - button_height + 50) // 2 -65, button_width, button_height),
     'QUIT': pygame.Rect((WIDTH-button_width*2), (HEIGHT - button_height + 50) // 2 + 10, button_width, button_height)
 }
 
-#music
+# music
 pygame.mixer.music.load('spaceman.mp3')
 pygame.mixer.music.play(-1)
 icon_play = pygame.image.load('musicOn.png')
@@ -174,12 +177,15 @@ def open_credit():
 
 #Loop
 while running:
-    screen.fill((30, 90, 200))
-    screen.blit(background_img, (0, 0))
-    screen.blit(title_text, text_rect)
+    if screen_black:
+        screen.fill((BLACK))
+    else:
+        screen.fill((30, 90, 200))
+        screen.blit(background_img, (0, 0))
+        screen.blit(title_text, text_rect)
     
     mouse_pos = pygame.mouse.get_pos() 
-   
+  
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -187,9 +193,13 @@ while running:
             for button_text, button_rect in buttons.items():
                 if button_rect.collidepoint(mouse_pos):
                     if button_text == 'START':
-                        print("Start button clicked!")    
-                    elif button_text == 'OPTION':
-                        print("Options button clicked!")
+                        start_game()
+                    elif button_text == 'CONTROL':
+                        open_control()
+                    elif button_text == 'SHOP':
+                        open_shop()
+                    elif button_text == 'CREDIT':
+                        open_credit()
                     elif button_text == 'QUIT':
                         running = False
             if icon_rect.collidepoint(mouse_pos):

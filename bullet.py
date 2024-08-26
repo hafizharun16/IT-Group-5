@@ -29,8 +29,8 @@ class Player(pygame.sprite.Sprite):
         self.jumping = False
 
         # Load and resize gun image (PNG)
-        self.gun_image = pygame.image.load("gun.png").convert_alpha()
-        self.gun_image = pygame.transform.scale(self.gun_image, (40, 20))  
+        self.gun_image = pygame.image.load("gun2.png").convert_alpha()
+        self.gun_image = pygame.transform.scale(self.gun_image, (50, 30))  
 
     def update(self):
         
@@ -72,7 +72,7 @@ class Player(pygame.sprite.Sprite):
         direction = direction.normalize()
 
         # gun offsen
-        gun_offset = pygame.math.Vector2(40, 0).rotate(-math.degrees(math.atan2(-direction.y, direction.x)))
+        gun_offset = pygame.math.Vector2(20, 0).rotate(-math.degrees(math.atan2(-direction.y, direction.x)))
         bullet_x = self.rect.centerx + gun_offset.x
         bullet_y = self.rect.centery + gun_offset.y
 
@@ -108,7 +108,7 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         super().__init__()
         self.image = pygame.image.load("projectile.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (10, 5))  # Resize projectile image
+        self.image = pygame.transform.scale(self.image, (20, 10))  # Resize projectile image
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.centery = y

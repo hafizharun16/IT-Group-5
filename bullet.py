@@ -21,7 +21,7 @@ GRAVITY = 0.8
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("player.png").convert_alpha()
+        self.image = pygame.image.load("J pic/player.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (70, 70))  
         self.rect = self.image.get_rect()
         self.rect.center = (WIDTH // 2, HEIGHT // 2)
@@ -29,7 +29,7 @@ class Player(pygame.sprite.Sprite):
         self.jumping = False
 
         # Load and resize gun image (PNG)
-        self.gun_image = pygame.image.load("gun.png").convert_alpha()
+        self.gun_image = pygame.image.load("J pic/gun.png").convert_alpha()
         self.gun_image = pygame.transform.scale(self.gun_image, (40, 20))  
 
     def update(self):
@@ -98,7 +98,7 @@ class Player(pygame.sprite.Sprite):
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
-        self.image = pygame.image.load("platform.png").convert_alpha()
+        self.image = pygame.image.load("J pic/platform.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (width, height))  # Resize platform image
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -107,7 +107,7 @@ class Platform(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         super().__init__()
-        self.image = pygame.image.load("projectile.png").convert_alpha()
+        self.image = pygame.image.load("J pic/projectile.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (10, 5))  # Resize projectile image
         self.rect = self.image.get_rect()
         self.rect.centerx = x
@@ -126,7 +126,7 @@ class Bullet(pygame.sprite.Sprite):
 class Opponent(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.image.load("opponent.png").convert_alpha()  
+        self.image = pygame.image.load("J pic/opponent.png").convert_alpha()  
         self.image = pygame.transform.scale(self.image, (70, 70))  
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -158,7 +158,7 @@ opponents.add(opponent1, opponent2)
 all_sprites.add(opponent1, opponent2)
 
 #  
-crosshair_image = pygame.image.load("crosshair.png").convert_alpha()
+crosshair_image = pygame.image.load("J pic/crosshair.png").convert_alpha()
 crosshair_image = pygame.transform.scale(crosshair_image, (20, 20))  # Resize crosshair
 
 # Main game 

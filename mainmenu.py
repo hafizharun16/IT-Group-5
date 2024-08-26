@@ -13,7 +13,7 @@ running = True
 screen_black = False
 
 # images
-background_img = pygame.image.load("background0.jpg")
+background_img = pygame.image.load("Pic/background0.jpg")
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 
 # Colors
@@ -22,8 +22,8 @@ BLACK = (0, 0, 0)
 AQUA = (51, 255, 255)
 
 # font
-title_font = pygame.font.Font('tittle.ttf', 30)
-title_font2 = pygame.font.Font('tittle.ttf', 50)
+title_font = pygame.font.Font('Font/tittle.ttf', 30)
+title_font2 = pygame.font.Font('Font/tittle.ttf', 50)
 title_text = title_font2.render('CAPTAIN INVADER', True, WHITE)
 text_rect = title_text.get_rect(center=(WIDTH // 2, 120))
 
@@ -39,11 +39,11 @@ buttons = {
 }
 
 # music
-pygame.mixer.music.load('spaceman.mp3')
+pygame.mixer.music.load('music/spaceman.mp3')
 pygame.mixer.music.play(-1)
-icon_play = pygame.image.load('musicOn.png')
+icon_play = pygame.image.load('Pic/musicOn.png')
 icon_play = pygame.transform.scale(icon_play, (50, 50)) 
-icon_pause = pygame.image.load('musicOff.png')
+icon_pause = pygame.image.load('Pic/musicOff.png')
 icon_pause = pygame.transform.scale(icon_pause, (50, 50)) 
 icon_rect = pygame.Rect(WIDTH - 60, HEIGHT - 60, 50, 50) 
 music_playing = True

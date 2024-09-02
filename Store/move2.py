@@ -41,7 +41,7 @@ walking_images = [
 ]
 
 # Load ducking image
-ducking_image = load_and_scale_image('H1S1/Dduckk.png', IMAGE_SCALE)
+ducking_image = load_and_scale_image('H1S1/Dduckka.png', IMAGE_SCALE)
 
 # Flip images for left movement
 flipped_standing_image = pygame.transform.flip(standing_image, True, False)

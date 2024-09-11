@@ -1,43 +1,48 @@
 import pygame
-from pygame.locals import *
+import csv
 
 pygame.init()
 
-# Screen settings
+#Screen settings
 WIDTH = 1100
 HEIGHT = 650
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Main Menu")
 clock = pygame.time.Clock()
 
-# Load assets
+#Variables
+level = 1
+
+#Images
 background_img = pygame.image.load("pic/background0.jpg")
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
 BG = pygame.image.load('pic/gameimg.jpg')
+Control_bg = pygame.image.load('pic/controlbg.jpg')
+Shop_bg = pygame.image.load('pic/shopbg.jpg')
+Credit_bg = pygame.image.load('pic/creditbg.jpg')
+Infinity = pygame.image.load('pic/infinity.jpg')
 
 icon_play = pygame.image.load('pic/musicOn.png')
 icon_play = pygame.transform.scale(icon_play, (50, 50))
 icon_pause = pygame.image.load('pic/musicOff.png')
 icon_pause = pygame.transform.scale(icon_pause, (50, 50))
 
-# Colors
+#Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 AQUA = (51, 255, 255)
 GREEN = (144, 201, 120)
+RED = (255, 0, 0)
 
-# Tile size
+#Tile size
 tile_size = 50
 
-# Fonts
+#Fonts
 title_font = pygame.font.Font('font/tittle.ttf', 30)
 title_font2 = pygame.font.Font('font/tittle.ttf', 50)
+font = pygame.font.SysFont('font/tittle.ttf', 30)
 
-# Button dimensions
-button_width = 150
-button_height = 40
-
-# Game State
+#State
 MAIN_MENU = 0
 PLAYING = 1
 CONTROLS = 2
@@ -46,7 +51,10 @@ CREDITS = 4
 
 current_state = MAIN_MENU
 
-# Button rects
+#Button
+button_width = 150
+button_height = 40
+
 buttons = {
     'START': pygame.Rect(((button_width) // 2) + 10, (HEIGHT - button_height + 50) // 2 - 65, button_width, button_height),
     'CONTROL': pygame.Rect(((button_width) // 2) + 10, (HEIGHT - button_height + 50) // 2 + 10, button_width, button_height),
@@ -55,20 +63,23 @@ buttons = {
     'QUIT': pygame.Rect((WIDTH - button_width * 2), (HEIGHT - button_height + 50) // 2 + 10, button_width, button_height)
 }
 
-# Music settings
+#Music
 pygame.mixer.music.load('music/spaceman.mp3')
 pygame.mixer.music.play(-1)
 icon_rect = pygame.Rect(WIDTH - 60, HEIGHT - 60, 50, 50)
 music_playing = True
 current_icon = icon_play
 
-# Utility functions
 def draw_button(button_rect, text, hover):
     button_color = (255, 153, 51) if hover else AQUA
     pygame.draw.rect(screen, button_color, button_rect)
     text_surface = title_font.render(text, True, BLACK)
     text_rect = text_surface.get_rect(center=button_rect.center)
     screen.blit(text_surface, text_rect)
+
+def draw_text(text, font, text_col, x, y):
+     img = font.render(text, True, text_col)
+     screen.blit(img, (x, y))
 
 def draw_icon(icon_image, rect):
     screen.blit(icon_image, rect)
@@ -83,18 +94,33 @@ def toggle_music():
         current_icon = icon_play
     music_playing = not music_playing
 
-# Placeholder start_game function
+#Function
 def start_game():
     global current_state
     
     while current_state == PLAYING:
         screen.blit(BG, (0, 0))
         world.draw()
+        pygame.display.set_caption("Game")
+
+        draw_text("HEALTH: ", font, RED, 10, 20)
+        draw_text("AMMO: ", font, GREEN, 10, 40)
+
+        back_button = pygame.Rect(WIDTH // 2 + 440, HEIGHT // 2 - 320, 100, 50)
+        pygame.draw.rect(screen, AQUA, back_button)
+        back_text = title_font.render("BACK", True, BLACK)
+        back_text_rect = back_text.get_rect(center=back_button.center)
+        screen.blit(back_text, back_text_rect)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                current_state = MAIN_MENU
-                return
+                pygame.quit()
+                current_state = False
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_button.collidepoint(pygame.mouse.get_pos()):
+                    current_state = MAIN_MENU
+                    return
 
         pygame.display.update()
         clock.tick(60)
@@ -106,7 +132,7 @@ def draw_grid():
         pygame.draw.line(screen, (255, 255, 255), (line * tile_size, 0), (line * tile_size, HEIGHT))
 
 def open_control():
-    screen.fill(BLACK)
+    screen.blit(Control_bg, (0, 0))
     control_font = pygame.font.Font(None, 45)
     
     control_texts = [
@@ -135,15 +161,16 @@ def open_control():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return
+                run = False
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if back_button.collidepoint(pygame.mouse.get_pos()):
-                    return  # Return to main menu
+                    return
 
         clock.tick(60)
 
 def open_shop():
-    screen.fill(BLACK)
+    screen.blit(Shop_bg, (0, 0))
     shop_font = pygame.font.Font(None, 45)
     shop_text = shop_font.render("Under Maintenance!", True, WHITE)
     shop_rect = shop_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
@@ -162,14 +189,15 @@ def open_shop():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return
+                run = False
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if back_button.collidepoint(pygame.mouse.get_pos()):
                     return
         clock.tick(60)
 
 def open_credit():
-    screen.fill(BLACK)
+    screen.blit(Credit_bg, (0, 0))
     credit_font = pygame.font.Font(None, 45)
     
     credit_texts = [
@@ -197,7 +225,8 @@ def open_credit():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return
+                run = False
+                exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if back_button.collidepoint(pygame.mouse.get_pos()):
                     return
@@ -208,8 +237,8 @@ class World():
 		self.tile_list = []
 
 		#load images
-		dirt_img = pygame.image.load('pic/dirt.png')
-		stone_img = pygame.image.load('pic/stone.png')
+		dirt_img = pygame.image.load('pic/Tile/0.png')
+		stone_img = pygame.image.load('pic/Tile/1.png')
 
 		row_count = 0
 		for row in data:
@@ -238,7 +267,7 @@ class World():
 
 world_data = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0], 
-[1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 
 [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -254,11 +283,11 @@ world_data = [
 
 world = World(world_data)
 
-# Main loop
+#Main loop
 while True:
     screen.fill((30, 90, 200))
     screen.blit(background_img, (0, 0))
-    screen.blit(title_font2.render('CAPTAIN INVADER', True, WHITE), (WIDTH // 2 - 150, 120))
+    screen.blit(title_font2.render('CAPTAIN INVADER', True, WHITE), (WIDTH // 2 - 230, 120))
 
     mouse_pos = pygame.mouse.get_pos()
 

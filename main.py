@@ -1,31 +1,46 @@
 import pygame
+from button import Button
 import csv
 
 pygame.init()
 
 #Screen settings
-WIDTH = 1100
-HEIGHT = 650
+WIDTH = 1200
+HEIGHT = 750
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Main Menu")
 clock = pygame.time.Clock()
 
 #Variables
+rows = 15
+cols = 25
+tile_size = HEIGHT // rows
+tile_type = 2
 level = 1
 
 #Images
 background_img = pygame.image.load("pic/background0.jpg")
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-BG = pygame.image.load('pic/gameimg.jpg')
+BG = pygame.image.load('pic/gamebg.jpeg')
+BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
 Control_bg = pygame.image.load('pic/controlbg.jpg')
+Control_bg = pygame.transform.scale(Control_bg, (WIDTH, HEIGHT))
 Shop_bg = pygame.image.load('pic/shopbg.jpg')
+Shop_bg = pygame.transform.scale(Shop_bg, (WIDTH, HEIGHT))
 Credit_bg = pygame.image.load('pic/creditbg.jpg')
+Credit_bg = pygame.transform.scale(Credit_bg, (WIDTH, HEIGHT))
 Infinity = pygame.image.load('pic/infinity.jpg')
 
 icon_play = pygame.image.load('pic/musicOn.png')
 icon_play = pygame.transform.scale(icon_play, (50, 50))
 icon_pause = pygame.image.load('pic/musicOff.png')
 icon_pause = pygame.transform.scale(icon_pause, (50, 50))
+
+img_list = []
+for x in range(tile_type):
+    img = pygame.image.load(f'pic/Tile/{x}.png')
+    img = pygame.transform.scale(img, (tile_size, tile_size))
+    img_list.append(img)
 
 #Colors
 WHITE = (255, 255, 255)
@@ -35,9 +50,6 @@ GREEN = (144, 201, 120)
 RED = (255, 0, 0)
 YELLOW= (255,255,102)
 GREY= (192,192,192)
-
-#Tile size
-tile_size = 50
 
 #Fonts
 title_font = pygame.font.Font('font/tittle.ttf', 30)
@@ -108,7 +120,7 @@ def start_game():
         draw_text("HEALTH: ", font, RED, 10, 20)
         draw_text("AMMO: ", font, GREEN, 10, 40)
 
-        back_button = pygame.Rect(WIDTH // 2 + 440, HEIGHT // 2 - 320, 100, 50)
+        back_button = pygame.Rect(WIDTH // 2 + 500, HEIGHT // 2 - 380, 100, 50)
         pygame.draw.rect(screen, AQUA, back_button)
         back_text = title_font.render("BACK", True, BLACK)
         back_text_rect = back_text.get_rect(center=back_button.center)
@@ -379,7 +391,6 @@ def open_shop():
                 if back_button.collidepoint(pygame.mouse.get_pos()):
                     return
         clock.tick(60)
-
 def open_credit():
     screen.blit(Credit_bg, (0, 0))
     credit_font = pygame.font.Font(None, 45)
@@ -416,55 +427,35 @@ def open_credit():
                     return
         clock.tick(60)
 
-class World():
-	def __init__(self, data):
-		self.tile_list = []
+class World:
+    def __init__(self, data):
+        self.obstacle_list = []
+        self.process_data(data)
 
-		#load images
-		dirt_img = pygame.image.load('pic/Tile/0.png')
-		stone_img = pygame.image.load('pic/Tile/1.png')
+    def process_data(self, data):
+        for y, row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:  # Check if tile is valid
+                    img = img_list[tile]  # Get the tile image from img_list
+                    img_rect = img.get_rect()
+                    img_rect.x = x * tile_size
+                    img_rect.y = y * tile_size
+                    self.obstacle_list.append((img, img_rect))
 
-		row_count = 0
-		for row in data:
-			col_count = 0
-			for tile in row:
-				if tile == 1:
-					img = pygame.transform.scale(dirt_img, (tile_size, tile_size))
-					img_rect = img.get_rect()
-					img_rect.x = col_count * tile_size
-					img_rect.y = row_count * tile_size
-					tile = (img, img_rect)
-					self.tile_list.append(tile)
-				if tile == 2:
-					img = pygame.transform.scale(stone_img, (tile_size, tile_size))
-					img_rect = img.get_rect()
-					img_rect.x = col_count * tile_size
-					img_rect.y = row_count * tile_size
-					tile = (img, img_rect)
-					self.tile_list.append(tile)
-				col_count += 1
-			row_count += 1
+    def draw(self):
+        for tile in self.obstacle_list:
+            screen.blit(tile[0], tile[1])  # tile[0] is the image, tile[1] is the rect
 
-	def draw(self):
-		for tile in self.tile_list:
-			screen.blit(tile[0], tile[1])
-
-world_data = [
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 
-[0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 0, 0],
-[0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[2, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0], 
-[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-]
-
+world_data = []
+for row in range(rows):
+	r = [-1] * cols
+	world_data.append(r)
+#load in level data and create world
+with open(f'level{level}_data.csv', newline='') as csvfile:
+	reader = csv.reader(csvfile, delimiter=',')
+	for x, row in enumerate(reader):
+		for y, tile in enumerate(row):
+			world_data[x][y] = int(tile)
 world = World(world_data)
 
 #Main loop

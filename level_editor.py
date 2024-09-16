@@ -34,7 +34,8 @@ font = pygame.font.SysFont('Futura', 24)
 title_font = pygame.font.Font('font/tittle.ttf', 30)
 
 #Images
-bg_img = pygame.image.load('pic/gameimg.jpg').convert_alpha()
+BG = pygame.image.load('pic/gamebg.jpeg')
+BG = pygame.transform.scale(BG, (screen_width, screen_height))
 
 img_list = []
 for x in range(tile_type):
@@ -56,7 +57,7 @@ for tile in range(0, cols):
 
 def draw_bg():
         screen.fill(GREEN)
-        screen.blit(bg_img, (0, 0))
+        screen.blit(BG, (0, 0))
 
 def draw_text(text, font, text_col, x, y):
     img = font.render(text, True, text_col)

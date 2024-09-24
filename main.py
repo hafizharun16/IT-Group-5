@@ -1,10 +1,12 @@
 import pygame
 from button import Button
-from pygame import mixer
+from game2 import start_game_2
+from invent import Inventory
 import csv
 import random
 import sys
 import math
+import sys
 
 pygame.init()
 
@@ -29,14 +31,13 @@ start_intro = False
 #Images
 background_img = pygame.image.load("pic/background0.jpg")
 background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-BG = pygame.image.load('pic/gamebg.jpeg')
+BG = pygame.image.load('pic/gameimg.jpg')
 BG = pygame.transform.scale(BG, (WIDTH, HEIGHT))
 Control_bg = pygame.image.load('pic/controlbg.jpg')
 Control_bg = pygame.transform.scale(Control_bg, (WIDTH, HEIGHT))
 Shop_bg = pygame.image.load('pic/shop.jpg')
 Shop_bg = pygame.transform.scale(Shop_bg, (WIDTH, HEIGHT))
 Credit_bg = pygame.image.load('pic/creditbg.jpg')
-Credit_bg = pygame.transform.scale(Credit_bg, (WIDTH, HEIGHT))
 Infinity = pygame.image.load('pic/infinity.jpg')
 gate = pygame.image.load("pic/gate1.png")
 gate1 = pygame.transform.scale(gate, (70, 100))
@@ -57,26 +58,34 @@ for x in range(tile_type):
 #Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+LIGHT_BLACK = (30, 30, 30)
 AQUA = (51, 255, 255)
 GREEN = (144, 201, 120)
-RED = (255, 0, 0)
 YELLOW= (255,255,102)
-GREY= (192,192,192)
 BLUE =(61, 233, 95)
+SAND = (194, 178, 128)      
+DARK_BLUE = (0, 0, 128)         
+GOLD = (255, 215, 0)           
+LIGHT_YELLOW = (255, 255, 224)  
+SOFT_ORANGE = (255, 160, 122)    
+LIGHT_PURPLE = (147, 112, 219)   
+PALE_GREEN = (152, 251, 152)      
+CRIMSON_RED = (220, 20, 60)      
+SOFT_TEAL = (32, 178, 170)        
 
 #Fonts
 title_font = pygame.font.Font('font/tittle.ttf', 30)
 title_font2 = pygame.font.Font('font/tittle.ttf', 50)
-control_font = pygame.font.Font('font/ProtestGuerrilla.ttf', 50)
-font = pygame.font.SysFont('font/tittle.ttf', 30)
+control_font = pygame.font.Font('font/Londona-reguler.otf', 50)
+game_font = pygame.font.Font('font/WarriotItalic.otf', 30)
 
 #State
 MAIN_MENU = 0
-PLAYING = 1
-CONTROLS = 2
-SHOP = 3
-CREDITS = 4
-
+BLACK_SCREEN = 1
+PLAYING = 2
+CONTROLS = 3
+SHOP = 4
+CREDITS = 5
 current_state = MAIN_MENU
 
 #Button
@@ -90,13 +99,17 @@ buttons = {
     'CREDIT': pygame.Rect((WIDTH - button_width * 2), (HEIGHT - button_height + 50) // 2 - 65, button_width, button_height),
     'QUIT': pygame.Rect((WIDTH - button_width * 2), (HEIGHT - button_height + 50) // 2 + 10, button_width, button_height)
 }
+next_button_text = 'Next'
+next_button_x = WIDTH // 2 - 65
+next_button_y = HEIGHT // 2 + 300
+next_button_rect = pygame.Rect(next_button_x, next_button_y, button_width - 30, button_height + 20)
 
 #Music
 pygame.mixer.music.load('music/spaceman.mp3')
-pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play(-1)
 jump_fx = pygame.mixer.Sound('music/jump.wav')
-jump_fx.set_volume(0.2)
+jump_fx.set_volume(0.7)
 icon_rect = pygame.Rect(WIDTH - 60, HEIGHT - 60, 50, 50)
 music_playing = True
 current_icon = icon_play
@@ -125,9 +138,13 @@ def toggle_music():
         current_icon = icon_play
     music_playing = not music_playing
 
+inventory = Inventory()
+
 #Function
 def start_game():
     global current_state
+    global current_icon
+    global music_playing
     start_intro = True
     
     MOVE_SPEED = 3
@@ -166,7 +183,23 @@ def start_game():
     arm_image = load_and_scale_image('Store/H1S1/arm3.png', IMAGE_SCALE)
     flipped_arm_image = pygame.transform.flip(arm_image, True, False)
     bullet_image = load_and_scale_image('Store/bullet3.png', BULLET_SCALE)
-    enemy_image = load_and_scale_image('Store/enemy.png', ENEMY_SCALE)
+    laser_image = load_and_scale_image('Store/bullet3.png', BULLET_SCALE)
+    # Load enemy image
+    enemy_walking_images = [
+        load_and_scale_image('E/EA.png', ENEMY_SCALE),
+        load_and_scale_image('E/EB.png', ENEMY_SCALE),
+        load_and_scale_image('E/EC.png', ENEMY_SCALE),
+        load_and_scale_image('E/ED.png', ENEMY_SCALE),
+    ]
+
+    flipped_enemy_walking_images = flip_images(enemy_walking_images)
+
+    enemy_gun_image = pygame.image.load('pic/enemygun.png').convert_alpha()
+    enemy_gun_image = pygame.transform.scale(enemy_gun_image, (30, 10))  # Adjust size
+
+    # Get the gun's dimensions
+    gun_width = enemy_gun_image.get_width()
+    gun_height = enemy_gun_image.get_height()
 
     # Flip images for left movement
     flipped_standing_image = pygame.transform.flip(standing_image, True, False)
@@ -188,28 +221,102 @@ def start_game():
     is_ducking = False
     jump_speed = 0
     ground_y = HEIGHT -25
+    vel = pygame.Vector2(0, 0)
+    gravity = 3
+    player_health = 100 
 	
     # Enemy class
     class Enemy(pygame.sprite.Sprite):
         def __init__(self, x, y):
             super().__init__()
-            self.image = enemy_image
+            self.images = enemy_walking_images
+            self.flipped_images = flipped_enemy_walking_images
+            self.image = self.images[0]
             self.rect = self.image.get_rect(center=(x, y))
             self.original_x = x
             self.direction = random.choice(["left", "right"])
             self.move_range = 3 * self.image.get_width()  # 3 tiles movement range
             self.left_boundary = self.original_x - self.move_range / 2
             self.right_boundary = self.original_x + self.move_range / 2
+            self.walking_index = 0
+            self.walking_timer = pygame.time.get_ticks()
+            self.walking_speed = 200  # Adjust walking speed if needed
+            self.speed = ENEMY_SPEED  # Define speed for movement
+            # Initialize shooting attributes
+            self.shoot_timer = pygame.time.get_ticks()  # Timer to track shooting
+            self.shoot_interval = 2000  # Time interval between shots in milliseconds
+            self.detection_radius = 100  # Set the detection radius (adjust as needed)
+            self.gun_image = enemy_gun_image
+            self.gun_offset = (10, 0)  # Adjust this for gun positioning relative to the enemy's body
+            # Define the barrel position relative to the unrotated gun
+            self.gun_barrel_offset = (gun_width - 10, gun_height // 2)  # Tip of the gun, adjust as needed
 
         def update(self):
+            # Update walking animation
+            now = pygame.time.get_ticks()
+            if now - self.walking_timer > self.walking_speed:
+                self.walking_timer = now
+                self.walking_index = (self.walking_index + 1) % len(self.images)
+                if self.direction == "right":
+                    self.image = self.images[self.walking_index]
+                else:
+                    self.image = self.flipped_images[self.walking_index]
+            
+            # Move the enemy
             if self.direction == "right":
-                self.rect.x += ENEMY_SPEED
-                if self.rect.right >= self.right_boundary:
+                self.rect.x += self.speed
+                if self.rect.right > self.right_boundary:
                     self.direction = "left"
-            elif self.direction == "left":
-                self.rect.x -= ENEMY_SPEED
-                if self.rect.left <= self.left_boundary:
+                    self.image = self.flipped_images[self.walking_index]
+            else:
+                self.rect.x -= self.speed
+                if self.rect.left < self.left_boundary:
                     self.direction = "right"
+                    self.image = self.images[self.walking_index]
+
+            # Shooting logic
+            distance_to_player = rect.centerx - self.rect.centerx
+            if abs(distance_to_player) < self.detection_radius:
+                now = pygame.time.get_ticks()
+                if now - self.shoot_timer > self.shoot_interval:
+                    self.shoot_timer = now
+
+                    # Calculate direction towards the player
+                    player_center_x = rect.centerx
+                    player_center_y = rect.centery
+
+                    # Use the center of the enemy for laser starting position
+                    laser_x = self.rect.centerx
+                    laser_y = self.rect.centery
+
+                    dx = player_center_x - laser_x
+                    dy = player_center_y - laser_y
+                    angle = math.atan2(dy, dx)  # Calculate angle to player
+
+                    laser = Laser(laser_x, laser_y, angle)  # Create a laser
+                    laser_group.add(laser)  # Add laser to laser_group
+
+        def draw_gun(self, screen, player_rect):
+            # Calculate angle towards the player
+            dx = player_rect.centerx - self.rect.centerx
+            dy = player_rect.centery - self.rect.centery
+            angle = math.degrees(math.atan2(-dy, dx))
+
+            # Rotate the gun image based on the angle
+            rotated_gun = pygame.transform.rotate(self.gun_image, angle)
+
+            # Adjust the gun's position and calculate the tip of the barrel after rotation
+            gun_rect = rotated_gun.get_rect(center=(self.rect.centerx + self.gun_offset[0], self.rect.centery + self.gun_offset[1]))
+
+            # Rotate the gun barrel offset to match the gun's rotation
+            barrel_x = gun_rect.centerx + self.gun_barrel_offset[0] * math.cos(math.radians(angle))
+            barrel_y = gun_rect.centery - self.gun_barrel_offset[0] * math.sin(math.radians(angle))
+
+            # Draw the gun
+            screen.blit(rotated_gun, gun_rect)
+
+            # Return the barrel position for shooting the laser
+            return barrel_x, barrel_y, angle
 
     class Bullet(pygame.sprite.Sprite):
         def __init__(self, x, y, direction, angle):
@@ -247,13 +354,37 @@ def start_game():
         enemy = Enemy(*pos)
         enemies.add(enemy)
 
+    class Laser(pygame.sprite.Sprite):
+        def __init__(self, x, y, angle):
+            super().__init__()
+            self.image = laser_image  
+            self.rect = self.image.get_rect(center=(x, y))
+            self.speed = BULLET_SPEED  # Define speed for movement
+            self.angle = angle
+
+        def update(self):
+            # Move the laser based on the angle
+            self.rect.x += self.speed * math.cos(self.angle)
+            self.rect.y += self.speed * math.sin(self.angle)
+
+            # Remove the laser if it goes off-screen
+            if self.rect.y < 0 or self.rect.y > HEIGHT or self.rect.x < 0 or self.rect.x > WIDTH:
+                self.kill()
+
     bullets = pygame.sprite.Group()
+    laser_group = pygame.sprite.Group()
 
     clock = pygame.time.Clock()
     crosshair_image = pygame.image.load("Store/H1S1/aim.png").convert_alpha()
     crosshair_image = pygame.transform.scale(crosshair_image, (20, 20))
 
     pygame.mouse.set_visible(False)
+
+    def draw_health_bar(surface, x, y, health, max_health):
+        health_ratio = health / max_health
+        health_width = 200 * health_ratio  # Width of the health bar based on health ratio
+        pygame.draw.rect(surface, (255, 0, 0), (x, y, 200, 20))  # Red background
+        pygame.draw.rect(surface, (0, 255, 0), (x, y, health_width, 20))
 
     def draw_icon(icon_image, rect):
         screen.blit(icon_image, rect)
@@ -286,29 +417,15 @@ def start_game():
         world.draw(screen_scroll)
         pygame.display.set_caption("Game")
 
-        draw_text("HEALTH: ", font, RED, 10, 20)
-
-        if start_intro == True:
-            if intro_fade.fade():
-                start_intro = False
-                intro_fade.fade_counter = 1
-
-        back_button = pygame.Rect(WIDTH // 2 + 500, HEIGHT // 2 - 380, 100, 50)
-        pygame.draw.rect(screen, AQUA, back_button)
-        back_text = title_font.render("BACK", True, BLACK)
-        back_text_rect = back_text.get_rect(center=back_button.center)
-        screen.blit(back_text, back_text_rect)
+        draw_text("MYR:", game_font, GOLD, 10, 50)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
                 current_state = False
                 exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if back_button.collidepoint(pygame.mouse.get_pos()):
-                    current_state = MAIN_MENU
-                    pygame.mouse.set_visible(True)
-                    pass
                 if icon_rect.collidepoint(mouse_pos):
                     if music_playing:
                         pygame.mixer.music.pause()
@@ -335,6 +452,7 @@ def start_game():
 
                     bullet = Bullet(arm_end_x, arm_end_y, bullet_direction, angle)
                     bullets.add(bullet)
+
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_d:
                     is_walking = True
@@ -370,21 +488,6 @@ def start_game():
                     rect.height = standing_image.get_height()
                     rect.y = ground_y - rect.height
 
-        if is_walking:
-            now = pygame.time.get_ticks()
-            if now - walking_timer > WALKING_SPEED:
-                walking_timer = now
-                walking_index = (walking_index + 1) % len(walking_images)
-                current_image = walking_images[walking_index] if moving_right else flipped_walking_images[walking_index]
-            if moving_right:
-                rect.x += MOVE_SPEED
-                if rect.right > WIDTH:
-                    rect.right = WIDTH
-            else:
-                rect.x -= MOVE_SPEED
-                if rect.left < 0:
-                    rect.left = 0
-
         if is_jumping:
             rect.y += jump_speed
             jump_speed += GRAVITY
@@ -401,7 +504,40 @@ def start_game():
                     is_jumping = False
                     jump_speed = 0
                     check_tile_solidification() 
+                elif rect.colliderect(tile_rect) and rect.y > tile_rect.y:
+                    rect.top = tile_rect.bottom
+                    jump_speed = 0
         
+        is_on_tile = False
+        for tile in world.tile_list:
+            img, tile_rect = tile
+            if rect.bottom == tile_rect.top and rect.right > tile_rect.left and rect.left < tile_rect.right:
+                is_on_tile = True
+
+            # If falling (not on a tile and not jumping), restrict horizontal movement
+        if not is_on_tile and not is_jumping:
+            rect.y += GRAVITY
+            move_speed = 0  # Prevent horizontal movement during falling
+        else:
+            move_speed = MOVE_SPEED  # Allow movement while jumping
+
+            # Handle walking while moving right or left
+        if is_walking:
+            now = pygame.time.get_ticks()
+            if now - walking_timer > WALKING_SPEED:
+                walking_timer = now
+                walking_index = (walking_index + 1) % len(walking_images)
+                current_image = walking_images[walking_index] if moving_right else flipped_walking_images[walking_index]
+
+            if moving_right:
+                rect.x += move_speed
+                if rect.right > WIDTH:
+                    rect.right = WIDTH
+            else:
+                rect.x -= move_speed
+                if rect.left < 0:
+                    rect.left = 0
+
         if rect.colliderect(gate_rect):
             pygame.mouse.set_visible(True)
             current_state = open_shop()
@@ -409,6 +545,7 @@ def start_game():
         update_player_movement()
         enemies.update()
         bullets.update()
+        laser_group.update()
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -449,8 +586,23 @@ def start_game():
                     enemy.kill()
                     break
 
+            # Handle laser collisions with the player
+        for laser in laser_group:
+            if laser.rect.colliderect(rect):  # Check collision with player
+                player_health -= 10  # Decrease health by 10
+                laser.kill()  # Remove the laser
+                if player_health <= 0:
+                    print("Player is dead!")  # Handle player death
+
+                    
+        laser_group.draw(screen)  # This should draw all lasers on the screen         
+
         for enemy in enemies:
             screen.blit(enemy.image, enemy.rect)
+            enemy.draw_gun(screen, rect)  # Draw the gun, passing the player's rect for direction
+        
+        draw_health_bar(screen, 50, 10, player_health, 100)
+        draw_icon(current_icon, icon_rect)
 
         pygame.display.update()
         clock.tick(60)
@@ -501,7 +653,7 @@ def open_control():
 
 def open_shop():
     screen.blit(Shop_bg, (0, 0))
-    foreground = pygame.image.load('light.jpg').convert_alpha()
+    foreground = pygame.image.load('pic/light.jpg').convert_alpha()
     foreground_width, foreground_height = 1050, 670  
     foreground = pygame.transform.scale(foreground, (foreground_width, foreground_height))
     foreground.set_alpha(100)
@@ -599,35 +751,51 @@ def open_shop():
     border_positions = [(203, 70), (515, 70), (830, 70), (213, 400), (525, 400), (830, 400)]
     for position in border_positions:
         draw_border(screen, border_color, rect_width, rect_height, border_thickness, position)
+    
+    next_button_rect = pygame.Rect(WIDTH - 120, HEIGHT - 50, 100, 40)
+    pygame.draw.rect(screen, (0, 255, 0), next_button_rect)
+    font = pygame.font.Font(None, 40)
+    text = font.render("Next", True, (0, 0, 0)) 
+    screen.blit(text, (next_button_rect.x + 15, next_button_rect.y + 5))
 
     pygame.display.update()
 
-    while True:
-        
+    Run = True
+    while Run:
 
         mouse_pos = pygame.mouse.get_pos()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button_text, button_rect in buttons.items():
                     if button_rect.collidepoint(mouse_pos):
                         if button_text == 'USING':
                             print("Helmet 1 equipped")
                         elif button_text == 'BUY1':
+                            inventory.add_item("helmet_2")
+                            inventory.save_to_file("inventory.txt")
                             print("Helmet 2 purchased")
                         elif button_text == 'BUY2':
+                            inventory.add_item("helmet_3")
+                            inventory.save_to_file("inventory.txt")
                             print("Helmet 3 purchased")
                         elif button_text == 'USING2':
                             print("Suit 1 equipped")
                         elif button_text == 'BUY3':
+                            inventory.add_item("suit_2")
+                            inventory.save_to_file("inventory.txt")
                             print("Suit 2 purchased")
                         elif button_text == 'BUY4':
+                            inventory.add_item("suit_3")
+                            inventory.save_to_file("inventory.txt")
                             print("Suit 3 purchased")
                         elif button_text == 'BACK':
                             return
+                    if next_button_rect.collidepoint(mouse_pos):
+                        start_game_2()
+                        Run = False
 
         for button_text, button_rect in buttons.items():
             hover = button_rect.collidepoint(mouse_pos)
@@ -638,17 +806,17 @@ def open_shop():
 
 def open_credit():
     screen.blit(Credit_bg, (0, 0))
-    credit_font = pygame.font.Font(None, 45)
+    credit_font = pygame.font.Font('font/GrandParadisoItalic-Italic.ttf', 70)
     
     credit_texts = [
-        "The Main Character: Hafiz",
-        "The Author: Imran",
-        "The Designer: John Doe",
-        "The Final Boss: Mr. Willie"
+        "The Main Character : Hafiz",
+        "The Author : Imran",
+        "The Designer : John Doe",
+        "The Final Boss : Mr. Willie"
     ]
     
     for i, text in enumerate(credit_texts):
-        credit_text = credit_font.render(text, True, WHITE)
+        credit_text = credit_font.render(text, True, GREEN)
         text_rect = credit_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 150 + i * 50))
         screen.blit(credit_text, text_rect)
 
@@ -672,32 +840,51 @@ def open_credit():
                     return
         clock.tick(60)
 
-class ScreenFade():
-	def __init__(self, direction, colour, speed):
-		self.direction = direction
-		self.colour = colour
-		self.speed = speed
-		self.fade_counter = 0
+def screen_black(message, x, y):
+    screen.fill(LIGHT_BLACK)
+    game_font = pygame.font.Font('font/Cinzel-Regular.otf', 30)
 
+    words = message.split(' ')
+    lines = []
+    current_line = ''
 
-	def fade(self):
-		fade_complete = False
-		self.fade_counter += self.speed
-		if self.direction == 1:#whole screen fade
-			pygame.draw.rect(screen, self.colour, (0 - self.fade_counter, 0, WIDTH // 2, HEIGHT))
-			pygame.draw.rect(screen, self.colour, (WIDTH // 2 + self.fade_counter, 0, WIDTH, HEIGHT))
-			pygame.draw.rect(screen, self.colour, (0, 0 - self.fade_counter, WIDTH, HEIGHT // 2))
-			pygame.draw.rect(screen, self.colour, (0, HEIGHT // 2 +self.fade_counter, WIDTH, HEIGHT))
-		if self.direction == 2:#vertical screen fade down
-			pygame.draw.rect(screen, self.colour, (0, 0, WIDTH, 0 + self.fade_counter))
-		if self.fade_counter >= WIDTH:
-			fade_complete = True
+    padding = 42
+    max_width = WIDTH - padding
 
-		return fade_complete
+    for word in words:
+        if game_font.size(current_line + word)[0] < max_width:
+            current_line += word + ' '
+        else:
+            lines.append(current_line)
+            current_line = word + ' '
+    lines.append(current_line)
 
+    for i, line in enumerate(lines):
+        text = game_font.render(line, True, SAND)
+        screen.blit(text, (x, y + i * 60))
+    
+    pygame.draw.rect(screen, AQUA, next_button_rect)
+    draw_text(next_button_text, game_font, BLACK, next_button_rect.x + 30, next_button_rect.y + 10)
 
-#create screen fades
-intro_fade = ScreenFade(1, BLACK, 4)
+    skip_button_rect = pygame.Rect(WIDTH - 120, HEIGHT - 50, 100, 40)
+    pygame.draw.rect(screen, AQUA, skip_button_rect)
+    draw_text("Skip", game_font, BLACK, skip_button_rect.x + 15, skip_button_rect.y - 5)
+
+    pygame.display.update()
+
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if skip_button_rect.collidepoint(mouse_pos):
+                    waiting = False
+                    start_game()
+                if next_button_rect.collidepoint(mouse_pos):
+                    waiting = False
 
 class World:
     def __init__(self, data):
@@ -769,6 +956,9 @@ while True:
                 if button_rect.collidepoint(mouse_pos):
                     if button_text == 'START':
                         current_state = PLAYING
+                        screen_black('A man was enjoying a well-deserved vacation with his family, savoring the peaceful moments away from duty. The warm sun, the sound of the ocean, and the laughter of his loved ones filled the air... But this tranquility was shattered when his phone rang. The message was urgent: his headquarters had been attacked. Chaos and destruction had engulfed the place he once protected, forcing him to leave behind his brief escape from reality and prepare for the unknown dangers awaiting him.', 45, 75)
+                        screen_black('As He arrived at the HQ, He learned that the enemies was aliens from MARS and many of his comrades had been abducted during the attack. The weight of their absence hit him hard; these were not just colleagues, they were his Nakamas(friends) he had fought alongside through countless battles. Driven by loyalty and a fierce sense of responsibility, He did not hesitate. He volunteered for a high-risk, near-suicidal mission to infiltrate enemy lines and bring them back. His determination was fueled by the bond they shared, one forged in the heat of war, and He knew he could not stand by while they suffered.', 45, 30)
+                        screen_black('Now its up to him to save his comrades from the clutches of these Martians, He is called... CAPTAIN INVADER', 45, 75)
                     elif button_text == 'CONTROL':
                         current_state = CONTROLS
                     elif button_text == 'SHOP':

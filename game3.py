@@ -3,7 +3,6 @@ import csv
 import sys
 import random
 import math
-from game3 import open_shop3, start_game3
 from invent import Inventory, load_and_scale_image, IMAGE_SCALE
 
 pygame.init()
@@ -50,12 +49,14 @@ moneyfont = pygame.font.Font('font/KnightWarrior.otf', 20)
 
 rows = 15
 cols = 35
+current_tile = 0
 tile_size = HEIGHT // rows
 tile_type = 7
-level = 2
+level = 3
 screen_scroll = False
 #player_money = 400
 balance = 0
+show_text = False
 
 MAIN_MENU = 0
 BLACK_SCREEN = 1
@@ -70,6 +71,7 @@ for x in range(tile_type):
     img = pygame.image.load(f'pic/Tile/{x}.png')
     img = pygame.transform.scale(img, (tile_size, tile_size))
     img_list.append(img)
+
 
 def update_player_images(inventory):
     global standing_image, walking_images, ducking_image  # Ensure we can modify these
@@ -111,7 +113,7 @@ def update_player_images(inventory):
             ]
             ducking_image = load_and_scale_image('Store/H2S1/H2S1A.png', IMAGE_SCALE)
 
-def start_game2():
+def start_game3():
     global current_state
     global current_icon, icon_play, icon_pause, icon_rect
     global music_playing
@@ -119,8 +121,9 @@ def start_game2():
     inventory.load_from_file("inventory.txt")
     inventory.load_from_file("inventory.txt")
     update_player_images(inventory) 
-    money_text = moneyfont.render(f"Money: {inventory.money} + {balance}", True, (255, 255, 255))
-
+    game_font = pygame.font.Font('font/WarriotItalic.otf', 30)
+    money_text = moneyfont.render(f"MYR: {inventory.money}", True, (255, 255, 255))
+    
     fps = 60
     MOVE_SPEED = 3
     WALKING_SPEED = 80
@@ -135,7 +138,7 @@ def start_game2():
     ENEMY_MOVE_AREA_RIGHT = 900
     MAX_FALL_SPEED = 10
 
-    BG = pygame.image.load('pic/gamebg2.jpg')
+    BG = pygame.image.load('pic/gamebg3.jpg')
     BG = pygame.transform.scale(BG, (WIDTH,HEIGHT))
     gate = pygame.image.load("pic/gate1.png")
     gate1 = pygame.transform.scale(gate, (70, 100))
@@ -243,6 +246,7 @@ def start_game2():
                 else:
                     self.image = self.flipped_images[self.walking_index]
             
+            # Move the enemy
             if self.direction == "right":
                 self.rect.x += self.speed
                 if self.rect.right > self.right_boundary:
@@ -369,7 +373,9 @@ def start_game2():
                         if self.rect.bottom > tile_rect.top:  # Ensure the bullet's bottom is above the tile's top
                             self.rect.right = tile_rect.left  # Stop at the left edge of the tile
                             self.kill()  # Remove the bullet after stopping
-                            break
+                            break  # Exit the loop after killing the bullet
+
+            # Remove the laser if it goes off-screen
             if self.rect.y < 0 or self.rect.y > HEIGHT or self.rect.x < 0 or self.rect.x > WIDTH:
                 self.kill()
     
@@ -484,7 +490,7 @@ def start_game2():
         screen.blit(BG, (0, 0))
         screen.blit(gate1, (gate_x, gate_y))
         world.draw(screen_scroll)
-        pygame.display.set_caption("Level 2")
+        pygame.display.set_caption("Level 3")
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         for event in pygame.event.get():
@@ -580,7 +586,8 @@ def start_game2():
 
                             # Change the tile to another tile type (for example, changing to tile type 1)
                             world.tile_list = [t for t in world.tile_list if t[1] != tile_rect]
-                            money_text = moneyfont.render(f"Money: {inventory.money} + {balance}", True, (255, 255, 255))
+                            money_text = moneyfont.render(f"Money: {inventory.money}", True, (255, 255, 255))
+                    if rect.colliderect(tile_rect):
                         if rect.right > tile_rect.left:  # Moving into the left side of a tile
                             rect.right = tile_rect.left  # Stop at the left edge of the tile
                             break
@@ -602,7 +609,7 @@ def start_game2():
 
                             # Change the tile to another tile type (for example, changing to tile type 1)
                             world.tile_list = [t for t in world.tile_list if t[1] != tile_rect]
-                            money_text = moneyfont.render(f"Money: {inventory.money} + {balance}", True, (255, 255, 255))
+                            money_text = moneyfont.render(f"Money: {inventory.money}", True, (255, 255, 255))
                     if rect.colliderect(tile_rect):
                         if rect.left < tile_rect.right:  # Moving into the right side of a tile
                             rect.left = tile_rect.right  # Stop at the right edge of the tile
@@ -627,7 +634,7 @@ def start_game2():
 
                             # Change the tile to another tile type (for example, changing to tile type 1)
                             world.tile_list = [t for t in world.tile_list if t[1] != tile_rect]
-                            money_text = moneyfont.render(f"Money: {inventory.money} + {balance}", True, (255, 255, 255))
+                            money_text = moneyfont.render(f"MYR: {inventory.money}", True, (255, 255, 255))
                 if rect.colliderect(tile_rect) and rect.y < tile_rect.y:
                     rect.bottom = tile_rect.top
                     is_jumping = False
@@ -661,14 +668,14 @@ def start_game2():
             fall_speed = MAX_FALL_SPEED
 
         if rect.colliderect(gate_rect):
-            pygame.mouse.set_visible(True)
-            current_state = open_shop3(inventory.money)
-        
+            game_over()
+            
+
         for tile in world.tile_list:
             img, tile_rect = tile
             if rect.colliderect(tile_rect):  # Assuming player_rect is your player's hitbox
                 tile_type = world.get_tile_type(tile_rect.x // tile_size, tile_rect.y // tile_size)
-                if tile_type == 4:
+                if tile_type == 5:
                     inventory.money += 10  # Increase money by 10 when colliding with tile 6
                     print(f"Money increased! Current money: {inventory.money}")
                     # Change the tile to another tile type (for example, changing to tile type 1)
@@ -683,7 +690,7 @@ def start_game2():
             bullet.update(world)
 
         for laser in laser_group:
-            laser.update(world)
+            laser.update(world)  
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -732,7 +739,7 @@ def start_game2():
                     print("Player is dead!")  # Handle player death
                     pygame.mouse.set_visible(True)  # Make the cursor visible
                     current_state = MAIN_MENU
-                    break 
+                    break
 
             # Handle laser collisions with the player
         for item in inventory.items:
@@ -772,14 +779,14 @@ def start_game2():
             screen.blit(enemy.image, enemy.rect)
             enemy.draw_gun(screen, rect)  # Draw the gun, passing the player's rect for direction
         
-        draw_health_bar(screen, 50, 10, player_health, 100)
+        draw_health_bar(screen, 7, 10, player_health, 100)
         draw_icon(current_icon, icon_rect)
         screen.blit(money_text, (10, 30))
         pygame.display.update()
         clock.tick(60)
     current_state = MAIN_MENU
 
-def open_shop2(player_money):
+def open_shop3(player_money):
     global inventory
 
     screen.blit(Shop_bg, (0, 0))
@@ -797,7 +804,7 @@ def open_shop2(player_money):
     # Draw shop balance
     show_text = True
     shop_font = pygame.font.Font(None, 40)
-    shop_text = shop_font.render(f"{player_money} MYR", True, BLACK)
+    shop_text = shop_font.render("150 MYR", True, BLACK)
     shop_rect = shop_text.get_rect(center=(WIDTH - 130, HEIGHT - 710))
     screen.blit(shop_text, shop_rect)
 
@@ -1020,9 +1027,9 @@ def open_shop2(player_money):
                         elif button_text == 'BACK':
                             return
                     if next_button_rect.collidepoint(mouse_pos):
-                        start_game2()
+                        start_game3()
                         Run = False
-        if show_text:
+        if show_text == True:
             screen.blit(shop_text, shop_rect)
 
         for button_text, button_rect in buttons.items():
@@ -1031,3 +1038,11 @@ def open_shop2(player_money):
 
         pygame.display.update()
         clock.tick(60)
+
+def game_over():
+    screen.fill(BLACK)
+    pygame.display.set_caption("The End")
+    game_font = pygame.font.Font('font/Cinzel-Regular.otf', 30)
+    game_over_text = game_font.render("Game Over", True, GOLD)  # Assuming WHITE is a defined color
+    screen.blit(game_over_text, (WIDTH / 2 - game_over_text.get_width() / 2, HEIGHT / 2 - game_over_text.get_height() / 2))
+    pygame.display.update()
